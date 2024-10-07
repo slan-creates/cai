@@ -1,4 +1,3 @@
-
 import json
 from fastapi import WebSocket
 from .llm_processor import LLMProcessor
@@ -11,11 +10,13 @@ from .deepgram_handler import create_deepgram_client, initialize_connection, sen
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     language_model_processor = LLMProcessor()
+    is_new_conversation = True
 
-    
     async def on_transcript(transcript: str, stt_latency: int):
+        nonlocal is_new_conversation
         print(f"User: {transcript}")
-        llm_response, llm_latency = await language_model_processor.generate_response(transcript)
+        llm_response, llm_latency = await language_model_processor.generate_response(transcript, is_new_conversation)
+        is_new_conversation = False  # Set to False after first interaction
         await websocket.send_text(f"Full LLM Response: {llm_response}")
         tts_latency = await stream_audio_to_websocket(websocket, llm_response)
 

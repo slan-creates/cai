@@ -1,4 +1,3 @@
-
 import time
 from langchain_groq import ChatGroq
 from .config import GROQ_API_KEY
@@ -31,14 +30,19 @@ class LLMProcessor:
             memory=self.memory
         )
 
-    async def generate_response(self, text):
-        self.memory.chat_memory.add_user_message(text) # Add user message to memory
+    async def generate_response(self, text, is_new_conversation=False):
+        if is_new_conversation:
+            self.memory.clear()  # Clear previous conversation memory
+            # You might want to add a system message to prompt for the initial greeting
+            self.memory.chat_memory.add_ai_message("Starting new conversation")
+
+        self.memory.chat_memory.add_user_message(text)
 
         start_time = time.time()
         response = self.conversation.invoke({"text": text})
         end_time = time.time()
 
-        self.memory.chat_memory.add_ai_message(response["text"]) # Add AI response to memory
+        self.memory.chat_memory.add_ai_message(response["text"])
         
         elapsed_time = int((end_time - start_time) * 1000)
         print(f"LLM ({elapsed_time}ms): {response['text']}")
